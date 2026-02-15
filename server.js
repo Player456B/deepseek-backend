@@ -9,6 +9,10 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+app.get("/", (req, res) => {
+  res.send("Server is working 🚀");
+});
+
 app.post("/chat", async (req, res) => {
   try {
     const response = await fetch("https://api.deepseek.com/v1/chat/completions", {
@@ -29,8 +33,10 @@ app.post("/chat", async (req, res) => {
     res.json(data);
 
   } catch (error) {
-    res.status(500).json({ error: "Error" });
+    res.status(500).json({ error: "Error connecting to DeepSeek" });
   }
 });
 
-app.listen(3000, () => console.log("Server running"));
+app.listen(process.env.PORT || 3000, () => {
+  console.log("Server running");
+});
