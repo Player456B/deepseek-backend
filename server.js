@@ -1,24 +1,29 @@
-import express from "express";
-import cors from "cors";
-import dotenv from "dotenv";
-import fetch from "node-fetch";
+const express = require("express");
+const cors = require("cors");
+const dotenv = require("dotenv");
+const fetch = require("node-fetch");
 
 dotenv.config();
 const app = express();
 
+/* ✅ CORS Configuration */
 app.use(cors({
   origin: "*",
   methods: ["GET", "POST"],
   allowedHeaders: ["Content-Type"]
 }));
+
 app.use(express.json());
 
+/* ✅ Test Route */
 app.get("/", (req, res) => {
   res.send("Server is working 🚀");
 });
 
+/* ✅ Chat Route */
 app.post("/chat", async (req, res) => {
   try {
+
     const response = await fetch("https://api.deepseek.com/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -34,13 +39,21 @@ app.post("/chat", async (req, res) => {
     });
 
     const data = await response.json();
+
+    if (!response.ok) {
+      console.log("DeepSeek Error Response:", data);
+      return res.status(response.status).json(data);
+    }
+
     res.json(data);
 
-} catch (error) {
-  console.log("DeepSeek Error:", error);
-  res.status(500).json({ error: error.message });
-}
+  } catch (error) {
+    console.log("Server Error:", error);
+    res.status(500).json({ error: "Failed to connect to DeepSeek" });
+  }
+});
 
+/* ✅ Port Binding (Very Important for Render) */
 app.listen(process.env.PORT || 3000, () => {
-  console.log("Server running");
+  console.log("Server running on port", process.env.PORT || 3000);
 });
