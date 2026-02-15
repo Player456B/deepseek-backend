@@ -1,59 +1,53 @@
-const express = require("express");
-const cors = require("cors");
-const dotenv = require("dotenv");
-const fetch = require("node-fetch");
+const express = require('express');
+const axios = require('axios');
+const cors = require('cors');
 
-dotenv.config();
 const app = express();
+const PORT = process.env.PORT || 3000;
 
-/* ✅ CORS Configuration */
-app.use(cors({
-  origin: "*",
-  methods: ["GET", "POST"],
-  allowedHeaders: ["Content-Type"]
-}));
-
+// Middleware
+app.use(cors());
 app.use(express.json());
 
-/* ✅ Test Route */
-app.get("/", (req, res) => {
-  res.send("Server is working 🚀");
-});
+// DeepSeek API configuration
+const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY;
+const DEEPSEEK_ENDPOINT = 'https://api.deepseek.com/v1/chat/completions';
 
-/* ✅ Chat Route */
-app.post("/chat", async (req, res) => {
+// Chat endpoint
+app.post('/api/chat', async (req, res) => {
   try {
-
-    const response = await fetch("https://api.deepseek.com/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${process.env.DEEPSEEK_API_KEY}`
+    const { message } = req.body;
+    
+    const response = await axios.post(
+      DEEPSEEK_ENDPOINT,
+      {
+        model: 'deepseek-chat',
+        messages: [{ role: 'user', content: message }],
+        max_tokens: 500,
+        temperature: 0.7
       },
-      body: JSON.stringify({
-        model: "deepseek-chat",
-        messages: [
-          { role: "user", content: req.body.message }
-        ]
-      })
+      {
+        headers: {
+          'Authorization': `Bearer ${DEEPSEEK_API_KEY}`,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+    
+    res.json({ 
+      response: response.data.choices[0].message.content 
     });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      console.log("DeepSeek Error Response:", data);
-      return res.status(response.status).json(data);
-    }
-
-    res.json(data);
-
   } catch (error) {
-    console.log("Server Error:", error);
-    res.status(500).json({ error: "Failed to connect to DeepSeek" });
+    console.error('API Error:', error.response?.data || error.message);
+    res.status(500).json({ error: 'Failed to process request' });
   }
 });
 
-/* ✅ Port Binding (Very Important for Render) */
-app.listen(process.env.PORT || 3000, () => {
-  console.log("Server running on port", process.env.PORT || 3000);
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok' });
+});
+
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });
