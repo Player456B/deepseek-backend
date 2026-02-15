@@ -41,16 +41,17 @@ app.post("/chat", async (req, res) => {
     const data = await response.json();
 
     if (!response.ok) {
-      console.log("DeepSeek Error Response:", data);
-      return res.status(response.status).json(data);
-    }
+  console.log("DeepSeek Error Response:", data);
 
+  return res.status(response.status).json({
+    error: data.error ? data.error.message : JSON.stringify(data)
+  });
+}
     res.json(data);
 
   } catch (error) {
     console.log("Server Error:", error);
-    res.status(500).json({ error: "Failed to connect to DeepSeek" });
-  }
+    res.status(500).json({ error: error.message });
 });
 
 /* ✅ Port Binding (Very Important for Render) */
