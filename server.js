@@ -6,7 +6,11 @@ import fetch from "node-fetch";
 dotenv.config();
 const app = express();
 
-app.use(cors());
+app.use(cors({
+  origin: "*",
+  methods: ["GET", "POST"],
+  allowedHeaders: ["Content-Type"]
+}));
 app.use(express.json());
 
 app.get("/", (req, res) => {
